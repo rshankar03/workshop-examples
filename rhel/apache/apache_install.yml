@@ -3,6 +3,19 @@
   hosts: web
 
   tasks:
+  - name: Gather service facts
+    ansible.builtin.service_facts:
+    
+  - name: Check if web server is Installed
+    ansible.builtin.package_facts:
+      manager: auto
+
+  - name: Remove existing web Server
+    ansible.builtin.package:
+      name: nginx
+      state: absent
+    when: '"nginx" in ansible_facts.packages'
+    
   - name: latest Apache version installed
     yum:
       name: httpd
@@ -16,15 +29,17 @@
   - name: firewalld enabled and running
     service:
       name: firewalld
-      enabled: true
-      state: started
+      enabled: false
+      state: stopped
 
   - name: firewalld permits http service
     firewalld:
       service: http
-      permanent: true
+      permanent: false
       state: enabled
-      immediate: yes
+      immediate: false
+    when:
+      - ansible_facts['services']['firewalld.service']['status'] == 'running'
 
   - name: Apache enabled and running
     service:
